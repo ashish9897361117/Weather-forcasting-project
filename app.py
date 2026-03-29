@@ -179,7 +179,7 @@ if "RainTomorrow" in df.columns:
         st.success("Prediction Result: No Rain Expected Tomorrow ☀️")
 
 # =========================================
-# Custom Prediction Section
+
 # =========================================
 st.subheader("🧠 Custom Prediction")
 
