@@ -17,7 +17,7 @@ st.set_page_config(
 # =========================================
 @st.cache_data
 def load_data():
-    return pd.read_csv("data/processed_weather.csv")
+    return pd.read_csv("processed_weather_eda.csv")
 
 @st.cache_resource
 def load_model():
