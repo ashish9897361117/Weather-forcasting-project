@@ -17,13 +17,13 @@ st.set_page_config(
 # -------------------------------
 @st.cache_data
 def load_data():
-    return pd.read_csv(r"C:\Users\Ashish Kushwah\OneDrive\Weather Forcasting\data\data\processed_weather_eda.csv")
+    return pd.read_csv(r"processed_weather_eda.csv")
 
 @st.cache_resource
 def load_model():
-    return joblib.load(r"C:\Users\Ashish Kushwah\OneDrive\Weather Forcasting\notebooks\weather_model.pkl")
+    return joblib.load(r"weather_model.pkl")
 
-feature_columns = joblib.load(r"C:\Users\Ashish Kushwah\OneDrive\Weather Forcasting\notebooks\model_features.pkl")
+feature_columns = joblib.load(r"model_features.pkl")
 
 df = load_data()
 model = load_model()
@@ -176,7 +176,7 @@ else:
 st.subheader("🧠 Custom Prediction")
 
 # Load feature columns
-feature_columns = joblib.load("C:\\Users\\Ashish Kushwah\\OneDrive\\Weather Forcasting\\notebooks\\model_features.pkl")
+feature_columns = joblib.load("model_features.pkl")
 
 col1, col2, col3 = st.columns(3)
 
