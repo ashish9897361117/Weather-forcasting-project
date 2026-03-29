@@ -6,5 +6,4 @@ scikit-learn
 streamlit
 plotly
 joblib
-jupyter
 altair
