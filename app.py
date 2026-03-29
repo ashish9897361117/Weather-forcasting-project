@@ -57,7 +57,7 @@ filtered_df = df.copy()
 if "RainTomorrow" in filtered_df.columns:
     rain_filter = st.sidebar.selectbox(
         "Filter by RainTomorrow",
-        options=["All", "No Rain", "Rain"]
+        options=["All", 0, 1]
     )
     if rain_filter != "All":
         filtered_df = filtered_df[filtered_df["RainTomorrow"] == rain_filter]
