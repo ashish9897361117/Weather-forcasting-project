@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 #
-df = pd.read_csv(r"C:\Users\Ashish Kushwah\OneDrive\Weather Forcasting\data\processed\Cleaned_weather.csv")
+df = pd.read_csv(r"Cleaned_weather.csv")
 df.head()
 #
 plt.figure(figsize=(8,5))
