@@ -201,11 +201,6 @@ if st.button("Predict Rain"):
 
     prediction = model.predict(input_df)[0]
 
-    st.write("### 🤖 Model Prediction")
-    if prediction == 1:
-        st.error("Model Result: Rain Expected Tomorrow ☔")
-    else:
-        st.success("Model Result: No Rain Expected Tomorrow ☀️")
 
     st.write("### 📊 Dataset-Based Weather Logic")
     if humidity >= 80 and pressure <= 1008 and windspeed >= 25:
