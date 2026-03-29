@@ -4,7 +4,7 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 import joblib
 import pandas as pd
 # Load the processed dataset
-df = pd.read_csv(r"C:\Users\Ashish Kushwah\OneDrive\Weather Forcasting\data\data\processed_weather_eda.csv")
+df = pd.read_csv(r"processed_weather_eda.csv")
 df.head()
 
 
