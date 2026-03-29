@@ -143,16 +143,12 @@ if "RainTomorrow" in filtered_df.columns:
 # -------------------------------
 # Correlation Heatmap
 # -------------------------------
-st.subheader("🔥 Correlation Heatmap")
-corr = filtered_df.corr(numeric_only=True)
-
-fig4 = px.imshow(
-    corr,
-    aspect="auto",
-    title="Feature Correlation Heatmap"
+fig = px.scatter_matrix(
+    df,
+    dimensions=["MaxTemp", "Humidity3pm", "Pressure3pm", "WindSpeed3pm"],
+    color="RainTomorrow"
 )
-st.plotly_chart(fig4, use_container_width=True, key="corr_heatmap")
-
+st.plotly_chart(fig)
 # -------------------------------
 # Prediction Section
 # -------------------------------
