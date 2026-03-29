@@ -228,28 +228,6 @@ if show_data:
 else:
     st.dataframe(filtered_df.head(20))
 
-
-
-
-import pandas as pd
-
-importance = model.feature_importances_
-
-feat_df = pd.DataFrame({
-    "Feature": feature_columns_saved,
-    "Importance": importance
-}).sort_values(by="Importance", ascending=False)
-
-fig = px.bar(
-    feat_df,
-    x="Importance",
-    y="Feature",
-    orientation="h",
-    title="Feature Importance"
-)
-
-st.plotly_chart(fig)
-
 # -------------------------------
 # Insights Section
 # -------------------------------
