@@ -4,83 +4,26 @@ import joblib
 import plotly.express as px
 from pathlib import Path
 
-# -------------------------
-# PAGE CONFIG
-# -------------------------
+# -------------------------------
+# Page configuration
+# -------------------------------
 st.set_page_config(
-    page_title="Weather AI Dashboard",
+    page_title="Weather Forecasting Dashboard",
     page_icon="🌦️",
     layout="wide"
 )
 
-# -------------------------
-# GLASS UI CSS 🔥
-# -------------------------
-st.markdown("""
-<style>
-/* Background */
-.stApp {
-    background: linear-gradient(135deg, #1e3c72, #2a5298);
-    color: white;
-}
-
-/* Glass Cards */
-.glass {
-    background: rgba(255,255,255,0.08);
-    border-radius: 20px;
-    padding: 20px;
-    backdrop-filter: blur(12px);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-    margin-bottom: 15px;
-}
-
-/* Header */
-.header {
-    text-align: center;
-    padding: 20px;
-}
-.header h1 {
-    font-size: 3rem;
-    color: #fff;
-}
-.header p {
-    font-size: 1.2rem;
-    color: #ddd;
-}
-
-/* KPI */
-.kpi {
-    text-align: center;
-}
-.kpi h2 {
-    margin: 0;
-    font-size: 2rem;
-}
-.kpi p {
-    margin: 0;
-    font-size: 0.9rem;
-}
-
-/* Footer */
-.footer {
-    text-align:center;
-    color:#ccc;
-    margin-top:20px;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# -------------------------
-# PATHS
-# -------------------------
+# -------------------------------
+# File paths (deployment-safe)
+# -------------------------------
 BASE_DIR = Path(__file__).parent
 DATA_PATH = BASE_DIR / "processed_weather_eda.csv"
 MODEL_PATH = BASE_DIR / "weather_model.pkl"
 FEATURES_PATH = BASE_DIR / "model_features.pkl"
 
-# -------------------------
-# LOAD
-# -------------------------
+# -------------------------------
+# Load data and model
+# -------------------------------
 @st.cache_data
 def load_data():
     return pd.read_csv(DATA_PATH)
@@ -90,113 +33,227 @@ def load_model():
     return joblib.load(MODEL_PATH)
 
 @st.cache_resource
-def load_features():
+def load_feature_columns():
     return joblib.load(FEATURES_PATH)
 
 df = load_data()
 model = load_model()
-features = load_features()
+feature_columns_saved = load_feature_columns()
 
-# -------------------------
-# HEADER
-# -------------------------
-st.markdown("""
-<div class="header">
-<h1>🌦️ Weather AI Dashboard</h1>
-<p>Advanced Analytics + AI Rain Prediction</p>
-</div>
-""", unsafe_allow_html=True)
+# -------------------------------
+# Title
+# -------------------------------
+st.title("🌦️ Weather Forecasting & Analytics Dashboard")
+st.markdown("Historical weather data analysis and rain prediction system")
 
-# -------------------------
-# KPI SECTION
-# -------------------------
-c1,c2,c3,c4 = st.columns(4)
+# -------------------------------
+# Sidebar
+# -------------------------------
+st.sidebar.header("Dashboard Filters")
+show_data = st.sidebar.checkbox("Show full dataset preview", value=False)
 
-def card(title, value):
-    return f"""
-    <div class="glass kpi">
-        <h2>{value}</h2>
-        <p>{title}</p>
-    </div>
-    """
+filtered_df = df.copy()
 
-c1.markdown(card("🌡️ Avg Temp", f"{df['MaxTemp'].mean():.1f}°C"), unsafe_allow_html=True)
-c2.markdown(card("💧 Humidity", f"{df['Humidity3pm'].mean():.1f}%"), unsafe_allow_html=True)
-c3.markdown(card("🌬️ Wind", f"{df['WindSpeed3pm'].mean():.1f}"), unsafe_allow_html=True)
-c4.markdown(card("🌧️ Rain %", f"{df['RainTomorrow'].mean()*100:.1f}%"), unsafe_allow_html=True)
+if "RainTomorrow" in filtered_df.columns:
+    rain_filter = st.sidebar.selectbox(
+        "Filter by RainTomorrow",
+        options=["All", 0, 1]
+    )
+    if rain_filter != "All":
+        filtered_df = filtered_df[filtered_df["RainTomorrow"] == rain_filter]
 
-# -------------------------
-# TABS
-# -------------------------
-tab1, tab2, tab3 = st.tabs(["📊 Analysis", "🤖 Prediction", "📁 Data"])
+# -------------------------------
+# KPI Section
+# -------------------------------
+st.subheader("📊 Key Metrics")
+col1, col2, col3, col4 = st.columns(4)
 
-# -------------------------
-# ANALYSIS TAB
-# -------------------------
-with tab1:
-    st.markdown('<div class="glass">', unsafe_allow_html=True)
+if "MaxTemp" in filtered_df.columns:
+    col1.metric("Average Max Temp", f"{filtered_df['MaxTemp'].mean():.2f} °C")
+else:
+    col1.metric("Average Max Temp", "N/A")
 
-    col1,col2 = st.columns(2)
+if "Humidity3pm" in filtered_df.columns:
+    col2.metric("Average Humidity", f"{filtered_df['Humidity3pm'].mean():.2f} %")
+else:
+    col2.metric("Average Humidity", "N/A")
 
-    fig1 = px.histogram(df, x="MaxTemp", title="Temperature Distribution")
-    col1.plotly_chart(fig1, use_container_width=True)
+if "Pressure3pm" in filtered_df.columns:
+    col3.metric("Average Pressure", f"{filtered_df['Pressure3pm'].mean():.2f}")
+else:
+    col3.metric("Average Pressure", "N/A")
 
-    fig2 = px.scatter(df, x="Humidity3pm", y="MaxTemp", color="RainTomorrow")
-    col2.plotly_chart(fig2, use_container_width=True)
+if "WindSpeed3pm" in filtered_df.columns:
+    col4.metric("Average Wind Speed", f"{filtered_df['WindSpeed3pm'].mean():.2f}")
+else:
+    col4.metric("Average Wind Speed", "N/A")
 
-    if hasattr(model,"feature_importances_"):
-        imp = pd.DataFrame({
-            "Feature": features,
-            "Importance": model.feature_importances_
-        }).sort_values(by="Importance", ascending=False)
+# -------------------------------
+# Weather Alerts
+# -------------------------------
+st.subheader("🚨 Weather Alerts")
 
-        fig3 = px.bar(imp.head(10), x="Importance", y="Feature", orientation="h")
-        st.plotly_chart(fig3, use_container_width=True)
+if "MaxTemp" in filtered_df.columns and filtered_df["MaxTemp"].mean() > 35:
+    st.warning("High Temperature Alert 🔥")
 
-    st.markdown('</div>', unsafe_allow_html=True)
+if "Humidity3pm" in filtered_df.columns and filtered_df["Humidity3pm"].mean() > 80:
+    st.warning("High Humidity Alert 💧")
 
-# -------------------------
-# PREDICTION TAB
-# -------------------------
-with tab2:
-    st.markdown('<div class="glass">', unsafe_allow_html=True)
+# -------------------------------
+# Charts
+# -------------------------------
+st.subheader("📈 Weather Analysis")
+chart_col1, chart_col2 = st.columns(2)
 
-    col1,col2,col3 = st.columns(3)
+if "MaxTemp" in filtered_df.columns:
+    fig1 = px.histogram(
+        filtered_df,
+        x="MaxTemp",
+        nbins=30,
+        title="Max Temperature Distribution"
+    )
+    chart_col1.plotly_chart(fig1, use_container_width=True, key="hist_max_temp")
 
-    h = col1.number_input("Humidity",0.0,100.0,80.0)
-    p = col2.number_input("Pressure",900.0,1100.0,1008.0)
-    w = col3.number_input("Wind",0.0,150.0,25.0)
+if "Humidity3pm" in filtered_df.columns and "MaxTemp" in filtered_df.columns:
+    fig2 = px.scatter(
+        filtered_df,
+        x="Humidity3pm",
+        y="MaxTemp",
+        title="Humidity vs Max Temperature"
+    )
+    chart_col2.plotly_chart(fig2, use_container_width=True, key="scatter_humidity_temp")
 
-    if st.button("🚀 Predict"):
-        input_df = pd.DataFrame(columns=features)
-        input_df.loc[0]=0
+# -------------------------------
+# RainTomorrow Distribution
+# -------------------------------
+if "RainTomorrow" in filtered_df.columns:
+    st.subheader("🌧️ Rain Tomorrow Distribution")
 
-        input_df.at[0,"Humidity3pm"]=h
-        input_df.at[0,"Pressure3pm"]=p
-        input_df.at[0,"WindSpeed3pm"]=w
+    rain_counts = filtered_df["RainTomorrow"].value_counts().reset_index()
+    rain_counts.columns = ["RainTomorrow", "Count"]
 
-        pred = model.predict(input_df)[0]
+    fig3 = px.bar(
+        rain_counts,
+        x="RainTomorrow",
+        y="Count",
+        title="Rain Tomorrow Count"
+    )
+    st.plotly_chart(fig3, use_container_width=True, key="rain_tomorrow_bar")
 
-        if pred==1:
-            st.error("🌧️ Rain Expected")
-        else:
-            st.success("☀️ No Rain")
+# -------------------------------
+# Correlation Heatmap
+# -------------------------------
+st.subheader("🔥 Correlation Heatmap")
+corr = filtered_df.corr(numeric_only=True)
 
-    st.markdown('</div>', unsafe_allow_html=True)
+fig4 = px.imshow(
+    corr,
+    aspect="auto",
+    title="Feature Correlation Heatmap"
+)
+st.plotly_chart(fig4, use_container_width=True, key="corr_heatmap")
 
-# -------------------------
-# DATA TAB
-# -------------------------
-with tab3:
-    st.markdown('<div class="glass">', unsafe_allow_html=True)
-    st.dataframe(df.head(50))
-    st.markdown('</div>', unsafe_allow_html=True)
+# -------------------------------
+# Prediction Section
+# -------------------------------
+st.subheader("🤖 Rain Prediction")
 
-# -------------------------
-# FOOTER
-# -------------------------
-st.markdown("""
-<div class="footer">
-Built by Ashish 🚀 | AI Weather Dashboard
-</div>
-""", unsafe_allow_html=True)
+if "RainTomorrow" in filtered_df.columns:
+    prediction_features = [col for col in filtered_df.columns if col != "RainTomorrow"]
+
+    selected_row = st.selectbox(
+        "Select a row index for prediction",
+        options=filtered_df.index.tolist()
+    )
+
+    input_data = filtered_df.loc[[selected_row], prediction_features]
+    prediction = model.predict(input_data)[0]
+
+    st.write("### Prediction Result")
+    if prediction == 1:
+        st.error("Rain Expected Tomorrow ☔")
+    else:
+        st.success("No Rain Expected Tomorrow ☀️")
+else:
+    st.warning("RainTomorrow column not found in dataset.")
+
+# -------------------------------
+# Custom Prediction Section
+# -------------------------------
+st.subheader("🧠 Custom Prediction")
+
+col5, col6, col7 = st.columns(3)
+
+humidity = col5.number_input("Humidity3pm", min_value=0.0, max_value=100.0, value=80.0)
+pressure = col6.number_input("Pressure3pm", min_value=900.0, max_value=1100.0, value=1008.0)
+windspeed = col7.number_input("WindSpeed3pm", min_value=0.0, max_value=150.0, value=25.0)
+
+if st.button("Predict Rain"):
+    input_df = pd.DataFrame(columns=feature_columns_saved)
+    input_df.loc[0] = 0
+
+    if "Humidity3pm" in input_df.columns:
+        input_df.at[0, "Humidity3pm"] = humidity
+    if "Pressure3pm" in input_df.columns:
+        input_df.at[0, "Pressure3pm"] = pressure
+    if "WindSpeed3pm" in input_df.columns:
+        input_df.at[0, "WindSpeed3pm"] = windspeed
+
+    prediction = model.predict(input_df)[0]
+
+    st.write("### 🤖 Model Prediction")
+    if prediction == 1:
+        st.error("Model Result: Rain Expected Tomorrow ☔")
+    else:
+        st.success("Model Result: No Rain Expected Tomorrow ☀️")
+
+    st.write("### 📊 Dataset-Based Weather Logic")
+    if humidity >= 80 and pressure <= 1008 and windspeed >= 25:
+        st.warning("Dataset Pattern Result: Higher chance of rain 🌧️")
+    elif humidity >= 70 and pressure <= 1012 and windspeed >= 15:
+        st.info("Dataset Pattern Result: Moderate chance of rain ⛅")
+    else:
+        st.success("Dataset Pattern Result: Lower chance of rain ☀️")
+
+    st.write("### 📝 Input Summary")
+    st.markdown(f"""
+- **Humidity3pm:** {humidity}
+- **Pressure3pm:** {pressure}
+- **WindSpeed3pm:** {windspeed}
+""")
+
+# -------------------------------
+# Dataset Preview
+# -------------------------------
+st.subheader("🗂️ Dataset Preview")
+
+if show_data:
+    st.dataframe(filtered_df)
+else:
+    st.dataframe(filtered_df.head(20))
+
+# -------------------------------
+# Insights Section
+# -------------------------------
+st.subheader("💡 Key Insights")
+
+insights = []
+
+if "MaxTemp" in filtered_df.columns:
+    insights.append(f"Average maximum temperature is **{filtered_df['MaxTemp'].mean():.2f} °C**.")
+
+if "Humidity3pm" in filtered_df.columns:
+    insights.append(f"Average humidity at 3 PM is **{filtered_df['Humidity3pm'].mean():.2f}%**.")
+
+if "RainTomorrow" in filtered_df.columns:
+    rain_percentage = filtered_df["RainTomorrow"].mean() * 100
+    insights.append(f"Rain is expected in approximately **{rain_percentage:.2f}%** of records.")
+
+if "Pressure3pm" in filtered_df.columns:
+    insights.append(f"Average pressure at 3 PM is **{filtered_df['Pressure3pm'].mean():.2f}**.")
+
+if insights:
+    for insight in insights:
+        st.markdown(f"- {insight}")
+else:
+    st.write("No insights available from current dataset.")
