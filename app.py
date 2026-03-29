@@ -176,7 +176,7 @@ else:
 st.subheader("🧠 Custom Prediction")
 
 # Load feature columns
-feature_columns = joblib.load("model_features.pkl")
+feature_columns = joblib.load("C:\\Users\\Ashish Kushwah\\OneDrive\\Weather Forcasting\\notebooks\\model_features.pkl")
 
 col1, col2, col3 = st.columns(3)
 
